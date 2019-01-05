@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Manger<T> : MonoBehaviour where T : MonoBehaviour
+public class Manager<T> : MonoBehaviour where T : MonoBehaviour
 {
     static T instance;
 
