@@ -4,37 +4,33 @@ public class CameraOrbit : MonoBehaviour
 {
     public Transform pivot; // the object being followed
     public Vector3 pivotOffset = Vector3.zero; // offset from target's pivot
-    public Transform target; // like a selected object (used with checking if objects between cam and target)
-
     public float distance = 10.0f; // distance from target (used with zoom)
     public float minDistance = 2f;
     public float maxDistance = 15f;
-    public float zoomSpeed = 1f;
+    public float zoomSpeed = 1f;//scale speed
 
-    public float xSpeed = 250.0f;
+    public float xSpeed = 250.0f;//rotation speed
     public float ySpeed = 120.0f;
+    public float damping = 0.02f;//ローテーションに対する抗力
 
     public bool allowYTilt = true;
-    public float yMinLimit = 30f;
-    public float yMaxLimit = 80f;
-
-    private float x = 0.0f;
-    private float y = 0.0f;
-
-    private float targetX = 0f;
-    private float targetY = 0f;
     private float targetDistance = 0f;
-    private float xVelocity = 1f;
-    private float yVelocity = 1f;
     private float zoomVelocity = 1f;
+
+    float rotateX = 0;
+    float rotateY = 0;
+
 
 
     void Start()
     {
+        transform.LookAt(pivot.position);
         var angles = transform.eulerAngles;
-        targetX = x = angles.x;
-        targetY = y = ClampAngle(angles.y, yMinLimit, yMaxLimit);
-        targetDistance = distance;
+
+        Debug.Log(angles.y);
+
+        targetDistance = distance = (transform.position - pivot.position).magnitude;
+        transform.position = pivot.position - transform.forward * distance;
     }
 
     void LateUpdate()
@@ -52,26 +48,28 @@ public class CameraOrbit : MonoBehaviour
             // or player can use the left mouse button while holding Ctr
             if (Input.GetMouseButton(1) || (Input.GetMouseButton(0) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))))
             {
-                targetX += Input.GetAxis("Mouse X") * xSpeed * 0.02f;
+                rotateY = Input.GetAxis("Mouse X") * xSpeed * 0.02f;
+
                 if (allowYTilt)
                 {
-                    targetY -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
-                    targetY = ClampAngle(targetY, yMinLimit, yMaxLimit);
-                }
-            }
-            x = Mathf.SmoothDampAngle(x, targetX, ref xVelocity, 0.3f);
-            if (allowYTilt) y = Mathf.SmoothDampAngle(y, targetY, ref yVelocity, 0.3f);
-            else y = targetY;
-            Quaternion rotation = Quaternion.Euler(y, x, 0);
-            distance = Mathf.SmoothDamp(distance, targetDistance, ref zoomVelocity, 0.5f);
+                    rotateX = -Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
 
-            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-            // apply
-            Vector3 position = rotation * new Vector3(0.0f, 0.0f, -distance) + pivot.position + pivotOffset;
-            transform.rotation = rotation;
-            transform.position = position;
+                }
+
+            }
+            if (!(Input.GetMouseButton(1) || (Input.GetMouseButton(0) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))))
+            {
+                rotateX = Mathf.Lerp(rotateX, 0, damping);
+                rotateY = Mathf.Lerp(rotateY, 0, damping);
+            }
+            transform.RotateAround(pivot.position, Vector3.up, rotateY);
+            transform.RotateAround(pivot.position, transform.right, rotateX);
+            distance = Mathf.Lerp(distance, targetDistance, 0.3f);
+            transform.position = pivot.position - transform.forward * distance;
+
         }
     }
+
 
     private float ClampAngle(float angle, float min, float max)
     {
