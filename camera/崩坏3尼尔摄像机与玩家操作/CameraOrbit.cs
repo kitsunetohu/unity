@@ -13,7 +13,7 @@ public class CameraOrbit : MonoBehaviour
     public float ySpeed = 120.0f;
     public float damping = 0.02f;//ローテーションに対する抗力
 
-    public bool allowYTilt = true;
+    public bool allowYTilt = true;//允许旋转
     private float targetDistance = 0f;
     private float zoomVelocity = 1f;
 
@@ -65,8 +65,17 @@ public class CameraOrbit : MonoBehaviour
             transform.RotateAround(pivot.position, Vector3.up, rotateY);
             transform.RotateAround(pivot.position, transform.right, rotateX);
             distance = Mathf.Lerp(distance, targetDistance, 0.3f);
+            
+            Vector3 v0=transform.forward;
+            Vector3 v1=pivot.position-transform.position;
+            v0.y=0;//接下来要求y方向的旋转角度，所以这里y置0
+            v1.y=0;
+            
+            Quaternion tmp=Quaternion.FromToRotation(v0,v1);//求v0到v1的旋转矩阵
+            transform.rotation=tmp*transform.rotation;//进行旋转
+            
             transform.position = pivot.position - transform.forward * distance;
-
+            
         }
     }
 
